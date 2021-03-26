@@ -1,0 +1,102 @@
+﻿@page "/"
+@using Syncfusion.Blazor.Grids
+@using Action = Syncfusion.Blazor.Grids.Action
+@using Microsoft.Extensions.Logging
+@inject ILogger<Index> Logger
+<div style="height:100px"></div>
+<SfGrid DataSource="List" AllowTextWrap="true" AllowFiltering="true" AllowSorting="true" AllowPaging="true" Toolbar="@(new List<string>() { "Edit", "Delete" })">
+    <GridSelectionSettings Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" EnableToggle="false" EnableSimpleMultiRowSelection="false" />
+    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox" />
+    <GridEvents OnActionBegin="ActionBegin" OnActionComplete="ActionComplete" TValue="DataValue" />
+    <GridPageSettings PageCount="5" PageSize="8" />
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" ShowDeleteConfirmDialog="true" AllowNextRowEdit="false" Mode="@EditMode.Dialog">
+        <HeaderTemplate>Data Value Information</HeaderTemplate>
+    </GridEditSettings>
+    <GridColumns>
+        <GridColumn Field="@nameof(DataValue.Id)" HeaderText="@nameof(DataValue.Id)" AllowEditing="@IsAddMode" IsPrimaryKey="true" EditType="EditType.NumericEdit"
+                    EditorSettings="@(new NumericEditCellParams { Params = new() { CssClass = "e-required", Min = 1, ShowClearButton = true, ShowSpinButton = true, } })"
+                    ValidationRules="@(new () { Required = true, })" />
+        <GridColumn Field="@nameof(DataValue.Name)" HeaderText="@nameof(DataValue.Name)" EditType="EditType.DefaultEdit"
+                    EditorSettings="@(new StringEditCellParams { Params = new() { CssClass = "e-required", ShowClearButton = true, } })"
+                    ValidationRules="@(new () { Required = true, })" />
+        <GridColumn Field="@nameof(DataValue.Key1)" HeaderText="@nameof(KeyValue1)" DataSource="KeySource1" EditType="EditType.DropDownEdit"
+                    ForeignKeyField="@nameof(KeyValue1.Key)"
+                    ForeignKeyValue="@nameof(KeyValue1.Name)"
+                    EditorSettings="@(new DropDownEditCellParams{ Params = new() { ShowClearButton = true, PopupWidth="auto"} })" />
+        <GridColumn Field="@nameof(DataValue.Key2)" HeaderText="@nameof(KeyValue2)" DataSource="KeySource2" EditType="EditType.DropDownEdit"
+                    ForeignKeyField="@nameof(KeyValue2.Key)"
+                    ForeignKeyValue="@nameof(KeyValue2.Name)"
+                    EditorSettings="@(new DropDownEditCellParams{ Params = new() { ShowClearButton = true, PopupWidth="auto" } })" />
+    </GridColumns>
+</SfGrid>
+<style>
+    .e-required:not(.e-disabled) > .e-float-text::after {
+        content: "*";
+        color: red;
+        margin-left: 0.5ex;
+        display: inline-block;
+        font-weight: bold;
+    }
+</style>
+@functions {
+    bool IsAddMode;
+    public class DataValue
+    {
+        public int Id { get; set; } = default!;
+        public string Name { get; set; } = default!;
+        public int? Key1 { get; set; } = default;
+        public string? Key2 { get; set; } = default!;
+    }
+    public class KeyValue1
+    {
+        public int Key { get; set; }
+        public string Name { get; set; } = default!;
+    }
+    public class KeyValue2
+    {
+        public string Key { get; set; } = default!;
+        public string Name { get; set; } = default!;
+    }
+    List<DataValue>? List { get; set; }
+    List<KeyValue1>? KeySource1 { get; set; }
+    List<KeyValue2>? KeySource2 { get; set; }
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        KeySource1 ??= new()
+        {
+                new() { Key = 1, Name = "きー" },
+                new() { Key = 2, Name = "キー" },
+                new() { Key = 3, Name = "key" },
+            };
+        KeySource2 ??= new()
+        {
+                new() { Key = "1", Name = "123" },
+                new() { Key = "a", Name = "abc" },
+                new() { Key = "あ", Name = "あいう" },
+            };
+        List ??= new()
+        {
+                new() { Id = 1, Name = "test1", Key1 = 1, Key2 = "1" },
+                new() { Id = 2, Name = "てすと２", Key1 = 2, Key2 = "a" },
+                new() { Id = 3, Name = "TEST3", Key1 = 3, Key2 = "a" },
+                new() { Id = 4, Name = "テスト４", Key1 = 1, Key2 = "あ" },
+            };
+    }
+    void ActionBegin(ActionEventArgs<DataValue> args)
+    {
+        Logger.LogInformation(nameof(ActionBegin) + "-> Action:{Action} RequestType:{RequestType}", args.Action, args.RequestType);
+        IsAddMode = false;
+        switch (args.Action, args.RequestType)
+        {
+            case (_, Action.Add):
+            case ("Add", Action.Save):
+                IsAddMode = true;
+                break;
+        }
+    }
+    void ActionComplete(ActionEventArgs<DataValue> args)
+    {
+        Logger.LogInformation(nameof(ActionComplete) + "-> Action:{Action} RequestType:{RequestType}", args.Action, args.RequestType);
+    }
+}
